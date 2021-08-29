@@ -1,0 +1,22 @@
+[package]
+name = "openexr-sys"
+version = "0.10.0"
+description="test package"
+license="BSD-3-Clause"
+authors = ["Anders Langlands <anderslanglands@gmail.com>",
+           "Luke Titley <from+openexr_rs@luketitley.com>",
+           "Scott Wilson <scott@propersquid.com>",
+           "Tiago Carvalho <tiago.carvalho@loquattech.com>"]
+edition = "2018"
+exclude = [
+    "thirdparty/Imath/src/ImathTest",
+    "thirdparty/Imath/src/PyImath",
+    "thirdparty/openexr/src/examples",
+    "thirdparty/openexr/src/test",
+    "thirdparty/openexr/docs",
+]
+
+[build-dependencies]
+cmake = "0.1"
+regex = "1.5.4"
+quick-xml = "0.22"
