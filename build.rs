@@ -114,17 +114,11 @@ fn get_linking_from_vsproj(
                 b"ItemDefinitionGroup" => {
                     for attr in e.attributes() {
                         if let Ok(attr) = attr {
-                            println!(
-                                std::str::from_utf8(attr.value.borrow())
-                                    .unwrap()
-                            );
                             if attr.key == b"Condition" {
                                 let s =
                                     std::str::from_utf8(attr.value.borrow())
                                         .unwrap();
                                 if s.contains(build_type) {
-                                    println!(
-                                    );
                                     in_item_definition = true;
                                 }
                             }
