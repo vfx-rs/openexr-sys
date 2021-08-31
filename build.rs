@@ -378,7 +378,7 @@ fn main() {
         // we don't actually want to link against anything in /bin but we 
         // need to tell rustc where the DLLs are on windows and this is the 
         // way to do it
-        println!("cargo:rustc-link-search=native={}", lib_path.display());
+        println!("cargo:rustc-link-search=native={}", bin_path.display());
 
         let mut env_path = format!(
             "{};{}",
