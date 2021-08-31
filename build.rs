@@ -6,8 +6,8 @@ const MJR_VERSION: u32 = 0;
 const MNR_VERSION: u32 = 10;
 
 fn build_zlib(target_dir: &Path, build_type: &str) -> std::string::String {
-    // We need to set this to Release or else the openexr symlinks will be incorrect.
-    
+    // We need to create a dedicated subdirectory for the build or cmake will 
+    // wipe it every time, forcing a rebuild
     let out_dir = target_dir.join("build-zlib");
     match std::fs::create_dir(&out_dir) {
         Ok(_) => (),
@@ -30,8 +30,6 @@ fn build_zlib(target_dir: &Path, build_type: &str) -> std::string::String {
 }
 
 fn build_imath(target_dir: &Path, build_type: &str) -> std::string::String {
-    // We need to set this to Release or else the openexr symlinks will be incorrect.
-    
     let out_dir = target_dir.join("build-imath");
     match std::fs::create_dir(&out_dir) {
         Ok(_) => (),
@@ -54,8 +52,6 @@ fn build_imath(target_dir: &Path, build_type: &str) -> std::string::String {
 }
 
 fn build_openexr(target_dir: &Path, build_type: &str) -> std::string::String {
-    // We need to set this to Release or else the openexr symlinks will be incorrect.
-    // Fixed by
     let out_dir = target_dir.join("build-openexr");
     match std::fs::create_dir(&out_dir) {
         Ok(_) => (),
@@ -378,7 +374,11 @@ fn main() {
         // now copy the build dylibs to the top-level target directory and link from
         // there
         println!("cargo:rustc-link-search=native={}", lib_path.display());
-        // println!("cargo:warning=adding link path {}", lib_path.display());
+
+        // we don't actually want to link against anything in /bin but we 
+        // need to tell rustc where the DLLs are on windows and this is the 
+        // way to do it
+        println!("cargo:rustc-link-search=native={}", lib_path.display());
 
         let mut env_path = format!(
             "{};{}",
@@ -394,7 +394,6 @@ fn main() {
             println!("cargo:rustc-link-lib=dylib={}", &d.libname);
             // println!("cargo:warning=linking to {}", &d.libname);
         }
-        // println!("cargo:warning=path is {}", &env_path);
 
         // finally, set LD_LIBRARY_PATH to the target directory when running things
         // from cargo. If you want to install somewhere, you're on your own for now...
