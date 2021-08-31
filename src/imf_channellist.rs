@@ -3,6 +3,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
 use crate::*;
+pub use crate::cppmmabi::*;
 use std::os::raw::*;
 
 #[repr(C, align(4))]
@@ -18,17 +19,6 @@ pub struct Imf_3_0__Channel_t {
 pub struct Imf_3_0__ChannelList_t {
     _unused: [u8; 0],
 }
-#[repr(C, align(%ALIGNImf_3_0::ChannelList::Iterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__ChannelList__Iterator_t {
-    _inner: [u8; %SIZEImf_3_0::ChannelList::Iterator%]
-}
-
-impl Default for Imf_3_0__ChannelList__Iterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::ChannelList::Iterator%] }
-    }
-}
 
 impl Imf_3_0__ChannelList__Iterator_t {
     pub fn layout() -> std::alloc::Layout {
@@ -41,17 +31,6 @@ impl Imf_3_0__ChannelList__Iterator_t {
     }
 }
 
-#[repr(C, align(%ALIGNImf_3_0::ChannelList::ConstIterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__ChannelList__ConstIterator_t {
-    _inner: [u8; %SIZEImf_3_0::ChannelList::ConstIterator%]
-}
-
-impl Default for Imf_3_0__ChannelList__ConstIterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::ChannelList::ConstIterator%] }
-    }
-}
 
 impl Imf_3_0__ChannelList__ConstIterator_t {
     pub fn layout() -> std::alloc::Layout {

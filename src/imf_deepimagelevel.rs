@@ -3,22 +3,12 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
 use crate::*;
+pub use crate::cppmmabi::*;
 use std::os::raw::*;
 
 #[repr(C)]
 pub struct Imf_3_0__DeepImageLevel_t {
     _unused: [u8; 0],
-}
-#[repr(C, align(%ALIGNImf_3_0::DeepImageLevel::Iterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__DeepImageLevel__Iterator_t {
-    _inner: [u8; %SIZEImf_3_0::DeepImageLevel::Iterator%]
-}
-
-impl Default for Imf_3_0__DeepImageLevel__Iterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::DeepImageLevel::Iterator%] }
-    }
 }
 
 impl Imf_3_0__DeepImageLevel__Iterator_t {
@@ -32,17 +22,6 @@ impl Imf_3_0__DeepImageLevel__Iterator_t {
     }
 }
 
-#[repr(C, align(%ALIGNImf_3_0::DeepImageLevel::ConstIterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__DeepImageLevel__ConstIterator_t {
-    _inner: [u8; %SIZEImf_3_0::DeepImageLevel::ConstIterator%]
-}
-
-impl Default for Imf_3_0__DeepImageLevel__ConstIterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::DeepImageLevel::ConstIterator%] }
-    }
-}
 
 impl Imf_3_0__DeepImageLevel__ConstIterator_t {
     pub fn layout() -> std::alloc::Layout {

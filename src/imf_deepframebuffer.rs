@@ -3,19 +3,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
 use crate::*;
+pub use crate::cppmmabi::*;
 use std::os::raw::*;
 
-#[repr(C, align(%ALIGNImf_3_0::DeepSlice%))]
-#[derive(Clone)]
-pub struct Imf_3_0__DeepSlice_t {
-    _inner: [u8; %SIZEImf_3_0::DeepSlice%]
-}
-
-impl Default for Imf_3_0__DeepSlice_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::DeepSlice%] }
-    }
-}
 
 impl Imf_3_0__DeepSlice_t {
     pub fn layout() -> std::alloc::Layout {
@@ -32,17 +22,6 @@ impl Imf_3_0__DeepSlice_t {
 pub struct Imf_3_0__DeepFrameBuffer_t {
     _unused: [u8; 0],
 }
-#[repr(C, align(%ALIGNImf_3_0::DeepFrameBuffer::Iterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__DeepFrameBuffer__Iterator_t {
-    _inner: [u8; %SIZEImf_3_0::DeepFrameBuffer::Iterator%]
-}
-
-impl Default for Imf_3_0__DeepFrameBuffer__Iterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::DeepFrameBuffer::Iterator%] }
-    }
-}
 
 impl Imf_3_0__DeepFrameBuffer__Iterator_t {
     pub fn layout() -> std::alloc::Layout {
@@ -55,17 +34,6 @@ impl Imf_3_0__DeepFrameBuffer__Iterator_t {
     }
 }
 
-#[repr(C, align(%ALIGNImf_3_0::DeepFrameBuffer::ConstIterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__DeepFrameBuffer__ConstIterator_t {
-    _inner: [u8; %SIZEImf_3_0::DeepFrameBuffer::ConstIterator%]
-}
-
-impl Default for Imf_3_0__DeepFrameBuffer__ConstIterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::DeepFrameBuffer::ConstIterator%] }
-    }
-}
 
 impl Imf_3_0__DeepFrameBuffer__ConstIterator_t {
     pub fn layout() -> std::alloc::Layout {

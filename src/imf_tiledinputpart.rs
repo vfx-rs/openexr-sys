@@ -3,19 +3,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
 use crate::*;
+pub use crate::cppmmabi::*;
 use std::os::raw::*;
 
-#[repr(C, align(%ALIGNImf_3_0::TiledInputPart%))]
-#[derive(Clone)]
-pub struct Imf_3_0__TiledInputPart_t {
-    _inner: [u8; %SIZEImf_3_0::TiledInputPart%]
-}
-
-impl Default for Imf_3_0__TiledInputPart_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::TiledInputPart%] }
-    }
-}
 
 impl Imf_3_0__TiledInputPart_t {
     pub fn layout() -> std::alloc::Layout {

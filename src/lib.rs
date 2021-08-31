@@ -3309,6 +3309,7 @@ pub mod imf_compression;
 pub mod std_map;
 pub mod imf_pixeltype;
 pub mod imf_deepimagechannel;
+pub mod cppmmabi;
 pub mod imf_imagechannel;
 pub mod imf_rgba;
 pub mod imf_tiledinputpart;

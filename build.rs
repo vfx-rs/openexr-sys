@@ -7,7 +7,14 @@ const MNR_VERSION: u32 = 10;
 
 fn build_zlib(target_dir: &Path, build_type: &str) -> std::string::String {
     // We need to set this to Release or else the openexr symlinks will be incorrect.
-    // Fixed by
+    
+    let out_dir = target_dir.join("build-zlib");
+    match std::fs::create_dir(&out_dir) {
+        Ok(_) => (),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
+        Err(e) => panic!("Could not create build directory '{}': {}", out_dir.display(), e),
+    }
+
     cmake::Config::new("thirdparty/zlib")
         .profile(build_type)
         .define("CMAKE_INSTALL_PREFIX", target_dir.to_str().unwrap())
@@ -15,6 +22,7 @@ fn build_zlib(target_dir: &Path, build_type: &str) -> std::string::String {
         .define("BUILD_TESTING", "OFF")
         .define("BUILD_SHARED_LIBS", "ON")
         .always_configure(false)
+        .out_dir(&out_dir)
         .build()
         .to_str()
         .expect("Unable to convert imath_root to str")
@@ -23,7 +31,14 @@ fn build_zlib(target_dir: &Path, build_type: &str) -> std::string::String {
 
 fn build_imath(target_dir: &Path, build_type: &str) -> std::string::String {
     // We need to set this to Release or else the openexr symlinks will be incorrect.
-    // Fixed by
+    
+    let out_dir = target_dir.join("build-imath");
+    match std::fs::create_dir(&out_dir) {
+        Ok(_) => (),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
+        Err(e) => panic!("Could not create build directory '{}': {}", out_dir.display(), e),
+    }
+
     cmake::Config::new("thirdparty/Imath")
         .profile(build_type)
         .define("CMAKE_INSTALL_PREFIX", target_dir.to_str().unwrap())
@@ -31,6 +46,7 @@ fn build_imath(target_dir: &Path, build_type: &str) -> std::string::String {
         .define("BUILD_TESTING", "OFF")
         .define("BUILD_SHARED_LIBS", "ON")
         .always_configure(false)
+        .out_dir(&out_dir)
         .build()
         .to_str()
         .expect("Unable to convert imath_root to str")
@@ -40,6 +56,13 @@ fn build_imath(target_dir: &Path, build_type: &str) -> std::string::String {
 fn build_openexr(target_dir: &Path, build_type: &str) -> std::string::String {
     // We need to set this to Release or else the openexr symlinks will be incorrect.
     // Fixed by
+    let out_dir = target_dir.join("build-openexr");
+    match std::fs::create_dir(&out_dir) {
+        Ok(_) => (),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
+        Err(e) => panic!("Could not create build directory '{}': {}", out_dir.display(), e),
+    }
+
     let cmake_prefix_path = target_dir.join("lib").join("cmake");
     cmake::Config::new("thirdparty/openexr")
         .profile(build_type)
@@ -50,6 +73,7 @@ fn build_openexr(target_dir: &Path, build_type: &str) -> std::string::String {
         .define("OPENEXR_INSTALL_EXAMPLES", "OFF")
         .define("BUILD_SHARED_LIBS", "ON")
         .always_configure(false)
+        .out_dir(&out_dir)
         .build()
         .to_str()
         .expect("Unable to convert openexr_root to str")
@@ -400,21 +424,34 @@ fn main() {
     // Run abigen again since our build directory could have changed
     let build_dir = Path::new(&std::env::var("OUT_DIR").unwrap()).join("build");
     let abigen_bin = build_dir.join("abigen").join("abigen");
-    let output = std::process::Command::new(abigen_bin)
-        .current_dir(build_dir)
-        .output()
-        .expect("Could not run abigen");
+    let abigen_txt = build_dir.join("abigen.txt");
 
-    let output = std::process::Command::new("python")
-        .args(&[&format!("{}-c/abigen/insert_abi.py", PRJ_NAME), 
-              "src", 
-              "src", 
-              &format!("{}/build/abigen.txt", std::env::var("OUT_DIR").unwrap())])
-        .output()
-        .expect("Could not launch python insert_abi.py");
+    if !abigen_txt.exists() {
+        let _ = std::process::Command::new(abigen_bin)
+            .current_dir(build_dir)
+            .output()
+            .expect("Could not run abigen");
+    }
 
-    if !output.status.success() {{
-        panic!("python insert_abi failed");
-    }}
+    // if the generated rust doesn't exist, run the python to generate it
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let cppmm_abi_out = Path::new(&out_dir).join("cppmm_abi_out").join("cppmmabi.rs");
+
+    if !cppmm_abi_out.exists() {
+        let output = std::process::Command::new("python")
+            .args(&[&format!("{}-c/abigen/insert_abi.py", PRJ_NAME), 
+                "cppmm_abi_in", 
+                &format!("{}/cppmm_abi_out", out_dir), 
+                &format!("{}/build/abigen.txt", out_dir)])
+            .output()
+            .expect("Could not launch python insert_abi.py");
+
+        if !output.status.success() {{
+            for line in std::str::from_utf8(&output.stderr).unwrap().lines() {{
+                println!("cargo:warning={}", line);
+            }}
+            panic!("python insert_abi failed");
+        }}
+    }
 
 }

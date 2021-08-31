@@ -3,19 +3,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
 use crate::*;
+pub use crate::cppmmabi::*;
 use std::os::raw::*;
 
-#[repr(C, align(%ALIGNImath_3_0::half%))]
-#[derive(Clone)]
-pub struct Imath_3_0__half_t {
-    _inner: [u8; %SIZEImath_3_0::half%]
-}
-
-impl Default for Imath_3_0__half_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImath_3_0::half%] }
-    }
-}
 
 impl Imath_3_0__half_t {
     pub fn layout() -> std::alloc::Layout {

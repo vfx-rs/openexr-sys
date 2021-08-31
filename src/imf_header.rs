@@ -3,19 +3,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
 use crate::*;
+pub use crate::cppmmabi::*;
 use std::os::raw::*;
 
-#[repr(C, align(%ALIGNImf_3_0::Header%))]
-#[derive(Clone)]
-pub struct Imf_3_0__Header_t {
-    _inner: [u8; %SIZEImf_3_0::Header%]
-}
-
-impl Default for Imf_3_0__Header_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::Header%] }
-    }
-}
 
 impl Imf_3_0__Header_t {
     pub fn layout() -> std::alloc::Layout {
@@ -28,17 +18,6 @@ impl Imf_3_0__Header_t {
     }
 }
 
-#[repr(C, align(%ALIGNImf_3_0::Header::Iterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__Header__Iterator_t {
-    _inner: [u8; %SIZEImf_3_0::Header::Iterator%]
-}
-
-impl Default for Imf_3_0__Header__Iterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::Header::Iterator%] }
-    }
-}
 
 impl Imf_3_0__Header__Iterator_t {
     pub fn layout() -> std::alloc::Layout {
@@ -51,17 +30,6 @@ impl Imf_3_0__Header__Iterator_t {
     }
 }
 
-#[repr(C, align(%ALIGNImf_3_0::Header::ConstIterator%))]
-#[derive(Clone)]
-pub struct Imf_3_0__Header__ConstIterator_t {
-    _inner: [u8; %SIZEImf_3_0::Header::ConstIterator%]
-}
-
-impl Default for Imf_3_0__Header__ConstIterator_t {
-    fn default() -> Self {
-        Self { _inner: [0u8; %SIZEImf_3_0::Header::ConstIterator%] }
-    }
-}
 
 impl Imf_3_0__Header__ConstIterator_t {
     pub fn layout() -> std::alloc::Layout {
