@@ -131,7 +131,6 @@ fn get_linking_from_vsproj(
 
     let proj_path = build_path.join(format!("{}.vcxproj", clib_versioned_name));
     let proj_xml = std::fs::read_to_string(&proj_path).ok()?;
-    // println!("cargo:warning=loaded vsproj {}", proj_path.display());
 
     let re = Regex::new(r"(?:.*\\(.*))(\.lib)$").unwrap();
 
@@ -207,8 +206,6 @@ fn get_linking_from_nmake(
         .join(format!("{}-shared.dir", clib_versioned_name))
         .join("build.make");
 
-    // For windows we generate an NMake Makefile then we'll parse that here to
-    // figure out our linker args
     let build_make = std::fs::read_to_string(&build_make_path).ok()?;
 
     let re = Regex::new(r"(?:.*\\(.*))(\.lib)$").unwrap();
@@ -255,7 +252,7 @@ fn get_linking_from_cmake(
 #[cfg(not(target_os = "windows"))]
 fn get_linking_from_cmake(build_path: &Path,
     clib_versioned_name: &str,
-    build_type: &str,
+    _build_type: &str,
 ) -> Vec<DylibPathInfo> {
     let link_txt_path = build_path
         .join("CMakeFiles")
@@ -273,7 +270,6 @@ fn get_linking_from_cmake(build_path: &Path,
 
     // Try and figure out what are libraries we want to copy to target.
     // Libraries will end with `.so` or `.so.28.1.0` or `.dylib`
-    // God knows for Windows...
 
     // First, strip off everything up to and including the initial "-o whatever.so"
     let mut link_txt = link_txt.split(' ');
@@ -292,7 +288,7 @@ fn get_linking_from_cmake(build_path: &Path,
 
 fn main() {
     // If the user has set CMAKE_PREFIX_PATH then we don't want to build the
-    // bundled libraries, *unless* they have also set OPENEXR_BUILD_LIBRARIES=1
+    // bundled libraries, *unless* they have also set CPPMM_OPENEXR_BUILD_LIBRARIES=1
     let build_libraries = if std::env::var("CMAKE_PREFIX_PATH").is_ok() {
         if let Ok(obl) = std::env::var("CPPMM_OPENEXR_BUILD_LIBRARIES") {
             obl == "1"
@@ -304,9 +300,7 @@ fn main() {
     };
 
     let out_dir = std::env::var("OUT_DIR").unwrap();
-    // println!("cargo:warning=out dir is {}", out_dir);
     let target_dir = Path::new(&out_dir).ancestors().skip(3).next().unwrap();
-    // println!("cargo:warning=target dir is {}", target_dir.display());
 
     let clib_name = format!("{}-c", PRJ_NAME);
     let clib_versioned_name =
@@ -315,16 +309,10 @@ fn main() {
         format!("{}-c-{}_{}-shared", PRJ_NAME, MJR_VERSION, MNR_VERSION);
 
     let lib_path = target_dir.join("lib");
-    let mut bin_path = target_dir.join("bin");
+    let bin_path = target_dir.join("bin");
     let cmake_prefix_path = lib_path.join("cmake");
 
-    #[cfg(not(target_os = "windows"))]
-    let generator = "Unix Makefiles";
-
-    #[cfg(target_os = "windows")]
-    // let generator = "NMake Makefiles";
-    let generator = "Visual Studio 16 2019";
-
+    // allow user to override build type with environment variables
     let build_type =
         if let Ok(build_type) = std::env::var("CPPMM_OPENEXR_BUILD_TYPE") {
             build_type
@@ -341,14 +329,12 @@ fn main() {
             .define("CMAKE_EXPORT_COMPILE_COMMANDS", "ON")
             .define("CMAKE_PREFIX_PATH", cmake_prefix_path.to_str().unwrap())
             .profile(&build_type)
-            .generator(&generator)
             .always_configure(false)
             .build()
     } else {
         println!("cargo:warning=Using system openexr");
         cmake::Config::new(clib_name)
             .define("CMAKE_EXPORT_COMPILE_COMMANDS", "ON")
-            .generator(&generator)
             .profile(&build_type)
             .always_configure(false)
             .build()
@@ -361,9 +347,35 @@ fn main() {
         &clib_shared_versioned_name,
         &build_type,
     );
-    // println!("cargo:warning=linklibs: {:?}", dylibs);
 
-    // link our wrapper library
+    // Link our wrapper library
+    //
+    // We currently build a dylib on windows just so we can enable Debug
+    // builds. This is because Rust always links against the release msvcrt 
+    // (presumably since the debug one is unusable in a lot of situations), thus
+    // we cannot link statically since setting the C shim to Debug mode will 
+    // cause it to link against the debug msvcrt. This in turn causes all sorts
+    // of bad shit to happen (segfaults mostly). By the way, did you know that 
+    // STL types are different sizes in debug and release builds on Windows?
+    // I didn't until today because I couldn't imagine a world in which something
+    // like that would be allowed to happen.
+    //
+    // In theory, you can override this, but like most things with CMake, the 
+    // correct incantations are buried somewhere in vague mailing list 
+    // threads, and don't actually seem to work (at least not with VS generators, 
+    // which appear to want to force the runtime for you).
+    //
+    // So, the easiest way out here is just to build everything from the C shim
+    // down as a DLL so we can neatly sidestep all this (because the C library 
+    // provides a nice ABI dambreak against the insanity).
+    //
+    // We still build statically on Linux since that way you don't need to install
+    // the DSO along with any Rust binaries you might want to build. Ultimately
+    // installation in a production environment will require a bit more thought,
+    // but suffice to say it's complex. On Windows at least, just copying DLLs
+    // around everywhere seems to be the norm so we assume it's not the end of 
+    // the world.
+    //
     println!("cargo:rustc-link-search=native={}", dst.display());
     #[cfg(not(target_os = "windows"))]
     println!("cargo:rustc-link-lib=static={}", clib_versioned_name);
@@ -371,60 +383,45 @@ fn main() {
     println!("cargo:rustc-link-lib=dylib={}", clib_shared_versioned_name);
 
     if build_libraries {
-        // now copy the build dylibs to the top-level target directory and link from
-        // there
+        // Link against the stuff what we built
         println!("cargo:rustc-link-search=native={}", lib_path.display());
-
         // we don't actually want to link against anything in /bin but we 
         // need to tell rustc where the DLLs are on windows and this is the 
         // way to do it
         println!("cargo:rustc-link-search=native={}", bin_path.display());
-
-        let mut env_path = format!(
-            "{};{}",
-            std::env::var("PATH").unwrap(),
-            bin_path.display()
-        );
-        for d in dylibs {
-            // bung the libdir in anyway in case we've got some other dependencies
-            // that need a good linking
-            let libdir = Path::new(&d.path).parent().unwrap();
-            env_path = format!("{};{}", env_path, libdir.display());
-            println!("cargo:rustc-link-search=native={}", libdir.display());
-            println!("cargo:rustc-link-lib=dylib={}", &d.libname);
-            // println!("cargo:warning=linking to {}", &d.libname);
-        }
-
-        // finally, set LD_LIBRARY_PATH to the target directory when running things
-        // from cargo. If you want to install somewhere, you're on your own for now...
-        #[cfg(target_os = "linux")]
-        println!("cargo:rustc-env=LD_LIBRARY_PATH={}", lib_path.display());
-        #[cfg(target_os = "macos")]
-        println!("cargo:rustc-env=DYLD_LIBRARY_PATH={}", lib_path.display());
-
-        // ...but this doesn't work on Windows so just copy the DLLs to the output directory
-    } else {
-        // If we're not building the libraries we don't want to go copying them
-        // around, so just link to where CMake found them
-        for d in dylibs {
-            let libdir = Path::new(&d.path).parent().unwrap();
-            println!("cargo:rustc-link-search=native={}", libdir.display());
-            println!("cargo:rustc-link-lib=dylib={}", &d.libname);
-            // println!("cargo:warning=linking to {}", &d.libname);
-        }
     }
 
+    for d in dylibs {
+        // Link against all our dependencies
+        let libdir = Path::new(&d.path).parent().unwrap();
+        println!("cargo:rustc-link-search=native={}", libdir.display());
+        println!("cargo:rustc-link-lib=dylib={}", &d.libname);
+    }
+
+    // On unices we need to link against the stdlib
     #[cfg(target_os = "linux")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=dylib=c++");
 
     // Insert the C++ ABI info
-    // Run abigen again since our build directory could have changed
+    //
+    // abigen is a small binary that's autogenerated by cppmm. It simply outputs
+    // the size of all opaquebytes types to a file, `abigen.txt`. Meanwhile, 
+    // cppmm sets up both the C and Rust layer source with placeholder markers
+    // that are replaced by the Python script `insert_abi.py`, below. 
+    //
+    // We do this because certain types (STL mainly) are different sizes between
+    // platforms (and even between build types on Windows!), and generating 
+    // their ABI info at build time here saves us from having to run the entire
+    // binding generation at the crate build level, and thus keeps a libclang 
+    // dependency out of all our end-user crates.
+    //
     let build_dir = Path::new(&std::env::var("OUT_DIR").unwrap()).join("build");
     let abigen_bin = build_dir.join("abigen").join("abigen");
     let abigen_txt = build_dir.join("abigen.txt");
 
+    // Run abigen again if the output doesn't exist.
     if !abigen_txt.exists() {
         let _ = std::process::Command::new(abigen_bin)
             .current_dir(build_dir)
@@ -432,10 +429,10 @@ fn main() {
             .expect("Could not run abigen");
     }
 
-    // if the generated rust doesn't exist, run the python to generate it
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let cppmm_abi_out = Path::new(&out_dir).join("cppmm_abi_out").join("cppmmabi.rs");
 
+    // if the generated rust doesn't exist, run the python to generate it
     if !cppmm_abi_out.exists() {
         let output = std::process::Command::new("python")
             .args(&[&format!("{}-c/abigen/insert_abi.py", PRJ_NAME), 
