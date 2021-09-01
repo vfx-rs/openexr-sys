@@ -8,6 +8,7 @@ authors = ["Anders Langlands <anderslanglands@gmail.com>",
            "Scott Wilson <scott@propersquid.com>",
            "Tiago Carvalho <tiago.carvalho@loquattech.com>"]
 edition = "2018"
+
 exclude = [
     "thirdparty/Imath/src/ImathTest",
     "thirdparty/Imath/src/PyImath",
@@ -31,4 +32,4 @@ exclude = [
 cmake = "0.1"
 regex = "1.5.4"
 quick-xml = "0.22"
-cppmm-build = { path = "../cppmm-build" }
+cppmm-build = "0.1"
