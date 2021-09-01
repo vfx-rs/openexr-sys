@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(openexr-c VERSION 0.10.0)
+project(openexr-c VERSION 0.10.1)
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
 set(SOURCES
     src/std_vector.cpp
