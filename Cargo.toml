@@ -24,7 +24,6 @@ exclude = [
     "thirdparty/zlib/old",
     "thirdparty/zlib/os400",
     "thirdparty/zlib/qnx",
-    "thirdparty/zlib/test",
     "thirdparty/zlib/watcom",
 ]
 
